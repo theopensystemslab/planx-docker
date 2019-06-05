@@ -1,1 +1,3 @@
-`./docker-run.sh`
+to start: `bin/start`
+
+to stop: `bin/stop`
