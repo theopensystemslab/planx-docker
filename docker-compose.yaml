@@ -1,31 +1,37 @@
 version: "3.6"
 services:
+  # postgres:
+  #   image: postgres
+  #   restart: always
+  #   # ports:
+  #   #   - "8556:5432"
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+
   arangodb:
     image: arangodb/arangodb:3.4.5
     restart: always
     ports:
       - "8555:8529"
+    # depends_on:
+    #   - "postgres"
     environment:
       ARANGO_ROOT_PASSWORD: admin
-  postgres:
-    image: postgres
-    restart: always
-    # ports:
-    #   - "8556:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+
   graphql-engine:
     # image: hasura/graphql-engine:latest
     image: hasura/graphql-engine:v1.0.0-beta.2
     ports:
       - "8557:8080"
     depends_on:
-      - "postgres"
       - "arangodb"
+      # - "postgres"
     restart: always
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:@postgres:5432/postgres
+      # HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:@postgres:5432/postgres
+      HASURA_GRAPHQL_DATABASE_URL: postgres://john@host.docker.internal:5432/planx-actions
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+
 volumes:
   db_data:
