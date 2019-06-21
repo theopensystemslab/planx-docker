@@ -1,37 +1,73 @@
 version: "3.6"
 services:
-  # postgres:
-  #   image: postgres
-  #   restart: always
-  #   # ports:
-  #   #   - "8556:5432"
-  #   volumes:
-  #     - db_data:/var/lib/postgresql/data
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - "8556:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
 
   arangodb:
     image: arangodb/arangodb:3.4.5
     restart: always
     ports:
-      - "8555:8529"
-    # depends_on:
-    #   - "postgres"
+      - "${ARANGODB_PORT}:8529"
+    depends_on:
+      - "postgres"
     environment:
-      ARANGO_ROOT_PASSWORD: admin
+      # ARANGO_ROOT_PASSWORD: admin
+      ARANGO_RANDOM_ROOT_PASSWORD: 1
+      ARANGO_STORAGE_ENGINE: rocksdb
+    volumes:
+      - arangodb_data:/var/lib/arangodb
+      - arangodb_apps:/var/lib/arangodb-apps
 
-  graphql-engine:
+  hasura:
     # image: hasura/graphql-engine:latest
     image: hasura/graphql-engine:v1.0.0-beta.2
     ports:
-      - "8557:8080"
+      - "${HASURA_PORT}:8080"
     depends_on:
       - "arangodb"
-      # - "postgres"
+      - "postgres"
     restart: always
     environment:
-      # HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:@postgres:5432/postgres
-      HASURA_GRAPHQL_DATABASE_URL: postgres://john@host.docker.internal:5432/planx-actions
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
-      HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # HASURA_GRAPHQL_DATABASE_URL: postgres://john@host.docker.internal:5432/planx-actions
+      # HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_PASSWORD}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
+      ARANGODB_REMOTE_SCHEMA: http://arangodb:8529/_db/planx/api/graphql
+      ARANGODB_WEBHOOK: http://arangodb:8529/_db/planx/api/hasura-webhook
+
+  # planx-admin:
+  #   build: ../planx-admin
+  #   restart: always
+  #   ports:
+  #     - "${ADMIN_PORT}:1234"
+  #   depends_on:
+  #     - "hasura"
+  #   environment:
+  #     HASURA_PASSWORD: ${HASURA_PASSWORD}
+  #     HASURA_URL: http://${IP}:${HASURA_PORT}
+  # planx-apollo:
+  #   build: ../planx-apollo
+  #   # links:
+  #   #   - hasura
+  #   restart: always
+  #   ports:
+  #     - "${APOLLO_PORT}:1234"
+  #   depends_on:
+  #     - "hasura"
+  #   environment:
+  #     HASURA_PASSWORD: ${HASURA_PASSWORD}
+  #     GRAPHQL_URL: http://${IP}:${HASURA_PORT}/v1/graphql
 
 volumes:
-  db_data:
+  postgres_data:
+  arangodb_data:
+  arangodb_apps:
