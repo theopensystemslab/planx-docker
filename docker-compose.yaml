@@ -17,13 +17,10 @@ services:
     restart: always
     ports:
       - "${ARANGODB_PORT}:8529"
-    expose:
-      - "80"
     depends_on:
       - "postgres"
     environment:
-      # ARANGO_ROOT_PASSWORD: admin
-      ARANGO_RANDOM_ROOT_PASSWORD: 1
+      ARANGO_ROOT_PASSWORD: ${ARANGODB_ROOT_PASSWORD}
       ARANGO_STORAGE_ENGINE: rocksdb
     volumes:
       - arangodb_data:/var/lib/arangodb
@@ -34,8 +31,6 @@ services:
     image: hasura/graphql-engine:v1.0.0-beta.2
     ports:
       - "${HASURA_PORT}:8080"
-    expose:
-      - "80"
     depends_on:
       - "arangodb"
       - "postgres"
@@ -59,7 +54,7 @@ services:
       - 443:443
     depends_on:
       - "arangodb"
-      - "hasura"
+      # - "hasura"
 
 volumes:
   postgres_data:
